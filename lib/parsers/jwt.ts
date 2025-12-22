@@ -1,6 +1,3 @@
-/**
- * Decode a Base64URL-encoded string (JWT uses Base64URL without padding).
- */
 function base64UrlDecode(str: string): string {
   let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const pad = base64.length % 4;
@@ -22,10 +19,6 @@ export type JwtDecodeResult =
   | { valid: true; jwt: JwtDecoded }
   | { valid: false; error: string };
 
-/**
- * Decode a JWT token without verifying the signature.
- * Returns header and payload as objects and the raw signature string.
- */
 export function decodeJwt(token: string): JwtDecodeResult {
   const trimmed = token.trim();
   if (!trimmed) {
@@ -42,7 +35,10 @@ export function decodeJwt(token: string): JwtDecodeResult {
 
   const [headerB64, payloadB64, signatureB64] = parts;
   if (!headerB64 || !payloadB64 || !signatureB64) {
-    return { valid: false, error: "Invalid JWT: missing header, payload, or signature" };
+    return {
+      valid: false,
+      error: "Invalid JWT: missing header, payload, or signature",
+    };
   }
 
   try {
@@ -52,10 +48,16 @@ export function decodeJwt(token: string): JwtDecodeResult {
     const payload = JSON.parse(payloadRaw) as Record<string, unknown>;
 
     if (typeof header !== "object" || header === null) {
-      return { valid: false, error: "Invalid JWT: header is not a JSON object" };
+      return {
+        valid: false,
+        error: "Invalid JWT: header is not a JSON object",
+      };
     }
     if (typeof payload !== "object" || payload === null) {
-      return { valid: false, error: "Invalid JWT: payload is not a JSON object" };
+      return {
+        valid: false,
+        error: "Invalid JWT: payload is not a JSON object",
+      };
     }
 
     return {
@@ -77,9 +79,9 @@ export function decodeJwt(token: string): JwtDecodeResult {
   }
 }
 
-/**
- * Pretty-print JSON for display (header and payload).
- */
-export function jwtPartToJson(obj: Record<string, unknown>, indent = 2): string {
+export function jwtPartToJson(
+  obj: Record<string, unknown>,
+  indent = 2,
+): string {
   return JSON.stringify(obj, null, indent);
 }

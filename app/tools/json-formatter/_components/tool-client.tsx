@@ -3,14 +3,13 @@
 import { useState, useMemo, useCallback } from "react";
 import { Trash2, FileJson, CheckCircle2, XCircle } from "lucide-react";
 
-import { TextArea } from "@/components/shared/TextArea";
-import { CopyButton } from "@/components/shared/CopyButton";
+import { TextArea, CopyButton } from "@/components/shared";
 import {
   validateJson,
   formatJson,
   minifyJson,
   type IndentStyle,
-} from "@/lib/formatters/json";
+} from "@/lib/formatters";
 
 const SAMPLE_JSON = `{
   "name": "DevToolbox",

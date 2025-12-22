@@ -45,14 +45,29 @@ No files, tokens, or text inputs are uploaded or stored on any server.
 
 ## 🧱 Architecture
 
-The platform follows a scalable multi-tool architecture:
+The platform follows Next.js App Router conventions and a modular structure:
 
-/app/tools → Individual utilities  
-/components → Shared UI blocks  
-/lib → Processing logic  
-/utils → Helper functions
+```structure
+/app                    # App Router (layout, page, error, loading, not-found)
+  /tools/[slug]         # One route per tool; page.tsx + _components/ (colocated, private)
+/components             # Shared UI (barrel exports via index.ts)
+  /layout               # Header, Footer
+  /shared               # TextArea, CopyButton, ToolCard, CodeBlock
+  /tool                 # ToolLayout
+/lib                    # Business logic (barrel exports)
+  /formatters           # JSON, etc.
+  /encoders             # Base64, etc.
+  /parsers              # JWT, etc.
+  tools.ts              # Tool list, getToolBySlug(), getToolMetadata()
+/types                  # TypeScript types (re-exports)
+/utils                  # Helpers
+```
 
-Each tool operates as an isolated client-side module.
+- **Colocation:** Tool-specific client components live in `app/tools/<slug>/_components/` (underscore = private, not a route).
+- **Barrel exports:** Use `@/components/layout`, `@/components/shared`, `@/components/tool`, `@/lib/formatters`, `@/lib/encoders`, `@/lib/parsers` for cleaner imports.
+- **Tool pages:** Each tool page uses `getToolBySlug(slug)` and `getToolMetadata(slug)` from `@/lib/tools` and calls `notFound()` when missing.
+
+Each tool runs as an isolated client-side module.
 
 ---
 

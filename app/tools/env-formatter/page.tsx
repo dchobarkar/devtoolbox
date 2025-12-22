@@ -1,15 +1,19 @@
-import { tools } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool/ToolLayout";
-import { EnvFormatterClient } from "./tool-client";
+import { notFound } from "next/navigation";
+import { getToolBySlug, getToolMetadata } from "@/lib/tools";
+import { ToolLayout } from "@/components/tool";
+import { EnvFormatterClient } from "./_components/tool-client";
 
-const tool = tools.find((t) => t.slug === "env-formatter")!;
+const slug = "env-formatter";
 
-export const metadata = {
-  title: `${tool.name} — DevToolbox`,
-  description: tool.description,
-};
+export const metadata = (() => {
+  const meta = getToolMetadata(slug);
+  if (!meta) notFound();
+  return { title: meta.title, description: meta.description };
+})();
 
 export default function EnvFormatterPage() {
+  const tool = getToolBySlug(slug);
+  if (!tool) notFound();
   return (
     <ToolLayout
       title={tool.name}

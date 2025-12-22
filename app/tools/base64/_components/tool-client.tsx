@@ -10,14 +10,13 @@ import {
   FileUp,
 } from "lucide-react";
 
-import { TextArea } from "@/components/shared/TextArea";
-import { CopyButton } from "@/components/shared/CopyButton";
+import { TextArea, CopyButton } from "@/components/shared";
 import {
   encodeBase64,
   decodeBase64,
   encodeBase64FromBytes,
   wrapBase64Lines,
-} from "@/lib/encoders/base64";
+} from "@/lib/encoders";
 
 const SAMPLE_PLAIN = "Hello, DevToolbox! Encode me to Base64.";
 const SAMPLE_BASE64 = "SGVsbG8sIERldlRvb2xib3ghIEVuY29kZSBtZSB0byBCYXNlNjQu";

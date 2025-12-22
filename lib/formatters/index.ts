@@ -1,1 +1,1 @@
-// Formatter logic (JSON, .env, etc.) — used by tool clients
+export * from "./json";

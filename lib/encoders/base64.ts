@@ -1,7 +1,3 @@
-/**
- * Encode a UTF-8 string to Base64.
- * Uses unescape(encodeURIComponent(s)) for Unicode support in all browsers.
- */
 export function encodeBase64(text: string, urlSafe = false): string {
   if (text.length === 0) return "";
   try {
@@ -19,10 +15,6 @@ export type DecodeResult =
   | { success: true; value: string }
   | { success: false; error: string };
 
-/**
- * Decode Base64 to a UTF-8 string.
- * Supports URL-safe Base64 (-_ instead of +/).
- */
 export function decodeBase64(encoded: string, urlSafe = false): DecodeResult {
   const trimmed = encoded.trim().replace(/\s/g, "");
   if (trimmed.length === 0) {
@@ -33,13 +25,11 @@ export function decodeBase64(encoded: string, urlSafe = false): DecodeResult {
   if (urlSafe) {
     base64 = base64.replace(/-/g, "+").replace(/_/g, "/");
   }
-  // Add padding (Base64 length must be multiple of 4)
   const pad = base64.length % 4;
   if (pad) {
     base64 += "=".repeat(4 - pad);
   }
 
-  // Validate Base64 alphabet (after URL-safe normalization)
   if (!/^[A-Za-z0-9+/=]+$/.test(base64)) {
     return {
       success: false,
@@ -53,7 +43,6 @@ export function decodeBase64(encoded: string, urlSafe = false): DecodeResult {
       const value = decodeURIComponent(escape(binary));
       return { success: true, value };
     } catch {
-      // Binary or Latin1: return as-is
       return { success: true, value: binary };
     }
   } catch {
@@ -61,9 +50,6 @@ export function decodeBase64(encoded: string, urlSafe = false): DecodeResult {
   }
 }
 
-/**
- * Encode raw bytes (e.g. from a file) to Base64.
- */
 export function encodeBase64FromBytes(
   bytes: Uint8Array,
   urlSafe = false,
@@ -80,9 +66,6 @@ export function encodeBase64FromBytes(
   return base64;
 }
 
-/**
- * Wrap Base64 string into lines of the given length (MIME standard is 76).
- */
 export function wrapBase64Lines(base64: string, lineLength = 76): string {
   if (lineLength < 1 || base64.length <= lineLength) return base64;
   const lines: string[] = [];

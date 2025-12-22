@@ -1,1 +1,1 @@
-// Parser logic (JWT, regex, timestamps, etc.) — used by tool clients
+export * from "./jwt";

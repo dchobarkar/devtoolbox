@@ -12,9 +12,8 @@ import {
   Info,
 } from "lucide-react";
 
-import { TextArea } from "@/components/shared/TextArea";
-import { CopyButton } from "@/components/shared/CopyButton";
-import { decodeJwt, jwtPartToJson } from "@/lib/parsers/jwt";
+import { TextArea, CopyButton } from "@/components/shared";
+import { decodeJwt, jwtPartToJson } from "@/lib/parsers";
 
 // Classic jwt.io example token (header.payload.signature) — decodes to readable header/payload
 const SAMPLE_JWT =

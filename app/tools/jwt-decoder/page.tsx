@@ -1,15 +1,19 @@
-import { tools } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool/ToolLayout";
-import { JwtDecoderClient } from "./tool-client";
+import { notFound } from "next/navigation";
+import { getToolBySlug, getToolMetadata } from "@/lib/tools";
+import { ToolLayout } from "@/components/tool";
+import { JwtDecoderClient } from "./_components/tool-client";
 
-const tool = tools.find((t) => t.slug === "jwt-decoder")!;
+const slug = "jwt-decoder";
 
-export const metadata = {
-  title: `${tool.name} — DevToolbox`,
-  description: tool.description,
-};
+export const metadata = (() => {
+  const meta = getToolMetadata(slug);
+  if (!meta) notFound();
+  return { title: meta.title, description: meta.description };
+})();
 
 export default function JwtDecoderPage() {
+  const tool = getToolBySlug(slug);
+  if (!tool) notFound();
   return (
     <ToolLayout
       title={tool.name}

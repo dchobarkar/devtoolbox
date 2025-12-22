@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { ToolCard } from "@/components/shared/ToolCard";
+import { ToolCard } from "@/components/shared";
 import { tools } from "@/lib/tools";
 import {
   Braces,
@@ -41,7 +41,6 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12">
-      {/* Hero */}
       <section className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Developer Utility Hub
@@ -64,7 +63,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Privacy note */}
       <section className="mt-8 flex flex-wrap items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
         <Shield className="h-4 w-4 shrink-0 text-accent" aria-hidden />
         <span>
@@ -73,7 +71,6 @@ export default function HomePage() {
         </span>
       </section>
 
-      {/* Tool grid */}
       <section className="mt-12" aria-label="Available tools">
         <h2 className="sr-only">Available tools</h2>
         {filteredTools.length === 0 ? (

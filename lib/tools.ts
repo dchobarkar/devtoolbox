@@ -50,3 +50,18 @@ export const tools: Tool[] = [
     href: "/tools/env-formatter",
   },
 ];
+
+export function getToolBySlug(slug: string): Tool | undefined {
+  return tools.find((t) => t.slug === slug);
+}
+
+export function getToolMetadata(
+  slug: string,
+): { title: string; description: string } | undefined {
+  const tool = getToolBySlug(slug);
+  if (!tool) return undefined;
+  return {
+    title: `${tool.name} — DevToolbox`,
+    description: tool.description,
+  };
+}
