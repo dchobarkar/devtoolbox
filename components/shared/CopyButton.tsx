@@ -7,16 +7,19 @@ interface CopyButtonProps {
   text: string;
   label?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function CopyButton({
   text,
   label = "Copy",
   className,
+  disabled = false,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (disabled || !text) return;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -30,6 +33,7 @@ export function CopyButton({
     <button
       type="button"
       onClick={handleCopy}
+      disabled={disabled}
       className={className}
       aria-label={label}
       title={label}
