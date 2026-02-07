@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Trash2, FileJson } from "lucide-react";
+import { Trash2, FileJson, CheckCircle2, XCircle } from "lucide-react";
 
 import { TextArea } from "@/components/shared/TextArea";
 import { CopyButton } from "@/components/shared/CopyButton";
@@ -47,9 +47,34 @@ export function JsonFormatterClient() {
       {/* Input panel */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="text-sm font-medium text-foreground">
-            JSON input
-          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm font-medium text-foreground">
+              JSON input
+            </label>
+            {input.trim() && (
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  validation.valid
+                    ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                    : "bg-red-500/10 text-red-700 dark:text-red-400"
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {validation.valid ? (
+                  <>
+                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+                    Valid JSON
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3.5 w-3.5" aria-hidden />
+                    Invalid JSON
+                  </>
+                )}
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
