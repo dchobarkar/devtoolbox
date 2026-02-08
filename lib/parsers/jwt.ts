@@ -1,13 +1,4 @@
-function base64UrlDecode(str: string): string {
-  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = base64.length % 4;
-  if (pad) {
-    base64 += "=".repeat(4 - pad);
-  }
-  return atob(base64);
-}
-
-export interface JwtDecoded {
+interface JwtDecoded {
   header: Record<string, unknown>;
   payload: Record<string, unknown>;
   signature: string;
@@ -15,11 +6,20 @@ export interface JwtDecoded {
   payloadRaw: string;
 }
 
-export type JwtDecodeResult =
+type JwtDecodeResult =
   | { valid: true; jwt: JwtDecoded }
   | { valid: false; error: string };
 
-export function decodeJwt(token: string): JwtDecodeResult {
+const base64UrlDecode = (str: string): string => {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = base64.length % 4;
+  if (pad) {
+    base64 += "=".repeat(4 - pad);
+  }
+  return atob(base64);
+};
+
+const decodeJwt = (token: string): JwtDecodeResult => {
   const trimmed = token.trim();
   if (!trimmed) {
     return { valid: false, error: "Empty token" };
@@ -77,11 +77,11 @@ export function decodeJwt(token: string): JwtDecodeResult {
       error: `Invalid JWT: ${message}`,
     };
   }
-}
+};
 
-export function jwtPartToJson(
-  obj: Record<string, unknown>,
-  indent = 2,
-): string {
+const jwtPartToJson = (obj: Record<string, unknown>, indent = 2): string => {
   return JSON.stringify(obj, null, indent);
-}
+};
+
+export type { JwtDecoded, JwtDecodeResult };
+export { decodeJwt, jwtPartToJson };

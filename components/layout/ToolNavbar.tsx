@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Wrench } from "lucide-react";
 
-export function ToolNavbar() {
+const ToolNavbar = () => {
   return (
     <header
       className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
@@ -27,4 +27,6 @@ export function ToolNavbar() {
       </div>
     </header>
   );
-}
+};
+
+export default ToolNavbar;

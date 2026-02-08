@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolPageHeader } from "@/components/tool";
-import { EnvFormatterClient } from "./_components/tool-client";
+import ToolPageHeader from "@/components/tool/ToolPageHeader";
+import EnvFormatterClient from "./_components/tool-client";
 
 const slug = "env-formatter";
 
@@ -11,7 +12,7 @@ export const metadata = (() => {
   return { title: meta.title, description: meta.description };
 })();
 
-export default function EnvFormatterPage() {
+const EnvFormatterPage = () => {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
@@ -24,4 +25,6 @@ export default function EnvFormatterPage() {
       <EnvFormatterClient />
     </>
   );
-}
+};
+
+export default EnvFormatterPage;

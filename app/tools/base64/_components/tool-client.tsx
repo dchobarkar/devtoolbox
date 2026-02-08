@@ -10,13 +10,14 @@ import {
   FileUp,
 } from "lucide-react";
 
-import { TextArea, CopyButton } from "@/components/shared";
+import TextArea from "@/components/shared/TextArea";
+import CopyButton from "@/components/shared/CopyButton";
 import {
   encodeBase64,
   decodeBase64,
   encodeBase64FromBytes,
   wrapBase64Lines,
-} from "@/lib/encoders";
+} from "@/lib/encoders/base64";
 
 const SAMPLE_PLAIN = "Hello, DevToolbox! Encode me to Base64.";
 const SAMPLE_BASE64 = "SGVsbG8sIERldlRvb2xib3ghIEVuY29kZSBtZSB0byBCYXNlNjQu";
@@ -24,14 +25,16 @@ const MIME_LINE_LENGTH = 76;
 
 type Mode = "encode" | "decode";
 
-export function Base64Client() {
+const Base64Client = () => {
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<Mode>("encode");
   const [urlSafe, setUrlSafe] = useState(false);
   const [wrapLines, setWrapLines] = useState(false);
   const [dataUri, setDataUri] = useState(false);
   const [dataUriMime, setDataUriMime] = useState("text/plain");
-  const [fileEncodedResult, setFileEncodedResult] = useState<string | null>(null);
+  const [fileEncodedResult, setFileEncodedResult] = useState<string | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const decodeResult = useMemo(
@@ -51,7 +54,6 @@ export function Base64Client() {
       return decodeResult?.success ? decodeResult.value : "";
     }
     if (!rawEncoded) return "";
-    // Data URIs use single-line base64; wrap only affects plain output
     const forDataUri = dataUri ? rawEncoded : null;
     const plainOut = wrapLines
       ? wrapBase64Lines(rawEncoded, MIME_LINE_LENGTH)
@@ -62,6 +64,7 @@ export function Base64Client() {
     return plainOut;
   }, [mode, rawEncoded, wrapLines, dataUri, dataUriMime, decodeResult]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isValidDecode =
     mode === "decode" &&
     input.trim().length > 0 &&
@@ -106,10 +109,13 @@ export function Base64Client() {
     fileInputRef.current?.click();
   }, []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    setFileEncodedResult(null);
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(e.target.value);
+      setFileEncodedResult(null);
+    },
+    [],
+  );
 
   const handleModeChange = useCallback((m: Mode) => {
     setMode(m);
@@ -118,7 +124,6 @@ export function Base64Client() {
 
   return (
     <div className="space-y-6">
-      {/* Info: encoding vs encryption */}
       <div
         className="flex flex-wrap items-start gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
         role="status"
@@ -129,7 +134,6 @@ export function Base64Client() {
         </span>
       </div>
 
-      {/* Mode + options */}
       <section className="flex flex-wrap items-center gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5">
           <ModeButton
@@ -191,7 +195,6 @@ export function Base64Client() {
         )}
       </section>
 
-      {/* Input panel */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -263,7 +266,8 @@ export function Base64Client() {
         </div>
         {mode === "encode" && fileEncodedResult !== null && (
           <p className="text-xs text-muted-foreground">
-            Output from uploaded file. Type text or clear to encode text instead.
+            Output from uploaded file. Type text or clear to encode text
+            instead.
           </p>
         )}
         <TextArea
@@ -275,13 +279,12 @@ export function Base64Client() {
           value={input}
           onChange={handleInputChange}
           error={isInvalidDecode ? decodeResult?.error : undefined}
-          className="min-h-[140px] resize-y font-mono text-sm"
+          className="min-h-35 resize-y font-mono text-sm"
           spellCheck={mode === "encode"}
           aria-invalid={isInvalidDecode}
         />
       </section>
 
-      {/* Output panel */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">
@@ -301,7 +304,7 @@ export function Base64Client() {
         </div>
         {output ? (
           <pre
-            className="max-h-[300px] overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground whitespace-pre-wrap break-all"
+            className="max-h-75 overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground whitespace-pre-wrap break-all"
             role="region"
             aria-label={mode === "encode" ? "Base64 output" : "Decoded text"}
           >
@@ -328,9 +331,9 @@ export function Base64Client() {
       </section>
     </div>
   );
-}
+};
 
-function ModeButton({
+const ModeButton = ({
   active,
   onClick,
   children,
@@ -338,7 +341,7 @@ function ModeButton({
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <button
       type="button"
@@ -352,4 +355,6 @@ function ModeButton({
       {children}
     </button>
   );
-}
+};
+
+export default Base64Client;

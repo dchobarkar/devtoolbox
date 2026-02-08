@@ -1,9 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
-import { ToolCard } from "@/components/shared";
-import { tools } from "@/lib/tools";
 import {
   Braces,
   Key,
@@ -15,6 +12,9 @@ import {
   Search,
 } from "lucide-react";
 
+import ToolCard from "@/components/shared/ToolCard";
+import { tools } from "@/lib/tools";
+
 const toolIcons: Record<string, React.ReactNode> = {
   "json-formatter": <Braces className="h-5 w-5" />,
   "jwt-decoder": <Key className="h-5 w-5" />,
@@ -24,7 +24,7 @@ const toolIcons: Record<string, React.ReactNode> = {
   "env-formatter": <FileCode className="h-5 w-5" />,
 };
 
-export default function HomePage() {
+const HomePage = () => {
   const [query, setQuery] = useState("");
 
   const filteredTools = useMemo(() => {
@@ -92,4 +92,6 @@ export default function HomePage() {
       </section>
     </div>
   );
-}
+};
+
+export default HomePage;

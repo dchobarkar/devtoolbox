@@ -4,11 +4,11 @@ interface ToolPageHeaderProps {
   description: string;
 }
 
-export function ToolPageHeader({
+const ToolPageHeader = ({
   category,
   title,
   description,
-}: ToolPageHeaderProps) {
+}: ToolPageHeaderProps) => {
   return (
     <div className="mb-6">
       <p className="mb-1 text-sm font-medium text-accent">{category}</p>
@@ -16,4 +16,6 @@ export function ToolPageHeader({
       <p className="mt-2 text-muted-foreground">{description}</p>
     </div>
   );
-}
+};
+
+export default ToolPageHeader;

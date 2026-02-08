@@ -1,16 +1,18 @@
-export interface JsonValidationError {
+interface JsonValidationError {
   message: string;
   line?: number;
   column?: number;
 }
 
-export interface JsonValidationResult {
+interface JsonValidationResult {
   valid: boolean;
   error?: JsonValidationError;
   data?: unknown;
 }
 
-export function validateJson(input: string): JsonValidationResult {
+type IndentStyle = "2" | "4" | "tab";
+
+const validateJson = (input: string): JsonValidationResult => {
   const trimmed = input.trim();
   if (!trimmed) {
     return { valid: true, data: null };
@@ -54,11 +56,9 @@ export function validateJson(input: string): JsonValidationResult {
       error: { message, line, column },
     };
   }
-}
+};
 
-export type IndentStyle = "2" | "4" | "tab";
-
-function getIndentString(style: IndentStyle): string {
+const getIndentString = (style: IndentStyle): string => {
   switch (style) {
     case "2":
       return "  ";
@@ -69,24 +69,24 @@ function getIndentString(style: IndentStyle): string {
     default:
       return "  ";
   }
-}
+};
 
-export function formatJson(
-  input: string,
-  indentStyle: IndentStyle = "2",
-): string {
+const formatJson = (input: string, indentStyle: IndentStyle = "2"): string => {
   const result = validateJson(input);
   if (!result.valid || result.data === undefined) {
     return "";
   }
   const indent = getIndentString(indentStyle);
   return JSON.stringify(result.data, null, indent);
-}
+};
 
-export function minifyJson(input: string): string {
+const minifyJson = (input: string): string => {
   const result = validateJson(input);
   if (!result.valid || result.data === undefined) {
     return "";
   }
   return JSON.stringify(result.data);
-}
+};
+
+export type { JsonValidationError, JsonValidationResult, IndentStyle };
+export { validateJson, formatJson, minifyJson };

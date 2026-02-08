@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolPageHeader } from "@/components/tool";
-import { TimestampClient } from "./_components/tool-client";
+import ToolPageHeader from "@/components/tool/ToolPageHeader";
+import TimestampClient from "./_components/tool-client";
 
 const slug = "timestamp";
 
@@ -11,7 +12,7 @@ export const metadata = (() => {
   return { title: meta.title, description: meta.description };
 })();
 
-export default function TimestampPage() {
+const TimestampPage = () => {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
@@ -24,4 +25,6 @@ export default function TimestampPage() {
       <TimestampClient />
     </>
   );
-}
+};
+
+export default TimestampPage;

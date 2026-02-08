@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolPageHeader } from "@/components/tool";
-import { RegexTesterClient } from "./_components/tool-client";
+import ToolPageHeader from "@/components/tool/ToolPageHeader";
+import RegexTesterClient from "./_components/tool-client";
 
 const slug = "regex-tester";
 
@@ -11,7 +12,7 @@ export const metadata = (() => {
   return { title: meta.title, description: meta.description };
 })();
 
-export default function RegexTesterPage() {
+const RegexTesterPage = () => {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
@@ -24,4 +25,6 @@ export default function RegexTesterPage() {
       <RegexTesterClient />
     </>
   );
-}
+};
+
+export default RegexTesterPage;
