@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool";
+import { ToolPageHeader } from "@/components/tool";
 import { Base64Client } from "./_components/tool-client";
 
 const slug = "base64";
@@ -15,12 +15,13 @@ export default function Base64Page() {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
-    <ToolLayout
-      title={tool.name}
-      description={tool.description}
-      category={tool.category}
-    >
+    <>
+      <ToolPageHeader
+        category={tool.category}
+        title={tool.name}
+        description={tool.description}
+      />
       <Base64Client />
-    </ToolLayout>
+    </>
   );
 }

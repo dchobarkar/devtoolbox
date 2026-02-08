@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool";
+import { ToolPageHeader } from "@/components/tool";
 import { JwtDecoderClient } from "./_components/tool-client";
 
 const slug = "jwt-decoder";
@@ -15,12 +15,13 @@ export default function JwtDecoderPage() {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
-    <ToolLayout
-      title={tool.name}
-      description={tool.description}
-      category={tool.category}
-    >
+    <>
+      <ToolPageHeader
+        category={tool.category}
+        title={tool.name}
+        description={tool.description}
+      />
       <JwtDecoderClient />
-    </ToolLayout>
+    </>
   );
 }

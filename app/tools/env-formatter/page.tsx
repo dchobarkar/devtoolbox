@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getToolBySlug, getToolMetadata } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool";
+import { ToolPageHeader } from "@/components/tool";
 import { EnvFormatterClient } from "./_components/tool-client";
 
 const slug = "env-formatter";
@@ -15,12 +15,13 @@ export default function EnvFormatterPage() {
   const tool = getToolBySlug(slug);
   if (!tool) notFound();
   return (
-    <ToolLayout
-      title={tool.name}
-      description={tool.description}
-      category={tool.category}
-    >
+    <>
+      <ToolPageHeader
+        category={tool.category}
+        title={tool.name}
+        description={tool.description}
+      />
       <EnvFormatterClient />
-    </ToolLayout>
+    </>
   );
 }
