@@ -1,22 +1,30 @@
-import { tools } from "@/lib/tools";
-import { ToolLayout } from "@/components/tool/ToolLayout";
-import { RegexTesterClient } from "./tool-client";
+import { notFound } from "next/navigation";
 
-const tool = tools.find((t) => t.slug === "regex-tester")!;
+import { getToolBySlug, getToolMetadata } from "@/lib/tools";
+import ToolPageHeader from "@/components/tool/ToolPageHeader";
+import RegexTesterClient from "./_components/tool-client";
 
-export const metadata = {
-  title: `${tool.name} — DevToolbox`,
-  description: tool.description,
+const slug = "regex-tester";
+
+export const metadata = (() => {
+  const meta = getToolMetadata(slug);
+  if (!meta) notFound();
+  return { title: meta.title, description: meta.description };
+})();
+
+const RegexTesterPage = () => {
+  const tool = getToolBySlug(slug);
+  if (!tool) notFound();
+  return (
+    <>
+      <ToolPageHeader
+        category={tool.category}
+        title={tool.name}
+        description={tool.description}
+      />
+      <RegexTesterClient />
+    </>
+  );
 };
 
-export default function RegexTesterPage() {
-  return (
-    <ToolLayout
-      title={tool.name}
-      description={tool.description}
-      category={tool.category}
-    >
-      <RegexTesterClient />
-    </ToolLayout>
-  );
-}
+export default RegexTesterPage;

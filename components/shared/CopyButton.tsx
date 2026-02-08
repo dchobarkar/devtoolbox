@@ -10,12 +10,12 @@ interface CopyButtonProps {
   disabled?: boolean;
 }
 
-export function CopyButton({
+const CopyButton = ({
   text,
   label = "Copy",
   className,
   disabled = false,
-}: CopyButtonProps) {
+}: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -45,4 +45,6 @@ export function CopyButton({
       )}
     </button>
   );
-}
+};
+
+export default CopyButton;

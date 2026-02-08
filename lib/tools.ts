@@ -1,4 +1,4 @@
-export interface Tool {
+interface Tool {
   name: string;
   slug: string;
   category: string;
@@ -6,7 +6,7 @@ export interface Tool {
   href: string;
 }
 
-export const tools: Tool[] = [
+const tools: Tool[] = [
   {
     name: "JSON Formatter",
     slug: "json-formatter",
@@ -50,3 +50,21 @@ export const tools: Tool[] = [
     href: "/tools/env-formatter",
   },
 ];
+
+const getToolBySlug = (slug: string): Tool | undefined => {
+  return tools.find((t) => t.slug === slug);
+};
+
+const getToolMetadata = (
+  slug: string,
+): { title: string; description: string } | undefined => {
+  const tool = getToolBySlug(slug);
+  if (!tool) return undefined;
+  return {
+    title: `${tool.name} — DevToolbox`,
+    description: tool.description,
+  };
+};
+
+export type { Tool };
+export { tools, getToolBySlug, getToolMetadata };

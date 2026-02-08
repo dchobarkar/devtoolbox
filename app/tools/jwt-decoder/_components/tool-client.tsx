@@ -12,39 +12,38 @@ import {
   Info,
 } from "lucide-react";
 
-import { TextArea } from "@/components/shared/TextArea";
-import { CopyButton } from "@/components/shared/CopyButton";
+import TextArea from "@/components/shared/TextArea";
+import CopyButton from "@/components/shared/CopyButton";
 import { decodeJwt, jwtPartToJson } from "@/lib/parsers/jwt";
 
-// Classic jwt.io example token (header.payload.signature) — decodes to readable header/payload
 const SAMPLE_JWT =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-function formatTimestamp(ts: unknown): string | null {
+const formatTimestamp = (ts: unknown): string | null => {
   if (typeof ts !== "number") return null;
   const d = new Date(ts * 1000);
   return d.toISOString();
-}
+};
 
-function formatAud(aud: unknown): string | null {
+const formatAud = (aud: unknown): string | null => {
   if (aud == null) return null;
   if (typeof aud === "string") return aud;
   if (Array.isArray(aud)) return aud.map(String).join(", ");
   return String(aud);
-}
+};
 
-function formatLifetime(iat: number, exp: number): string {
+const formatLifetime = (iat: number, exp: number): string => {
   const sec = exp - iat;
   if (sec < 60) return `${sec}s`;
   if (sec < 3600) return `${Math.round(sec / 60)}m`;
   if (sec < 86400) return `${(sec / 3600).toFixed(1)}h`;
   const days = (sec / 86400).toFixed(1);
   return `${days} day${days === "1.0" ? "" : "s"}`;
-}
+};
 
-function timeUntilOrSince(ts: number): string {
+const timeUntilOrSince = (ts: number): string => {
   const sec = ts - nowSec();
   const abs = Math.abs(sec);
   if (abs < 60)
@@ -61,9 +60,9 @@ function timeUntilOrSince(ts: number): string {
   return sec >= 0
     ? `in ${d} day${d === 1 ? "" : "s"}`
     : `${d} day${d === 1 ? "" : "s"} ago`;
-}
+};
 
-export function JwtDecoderClient() {
+const JwtDecoderClient = () => {
   const [input, setInput] = useState("");
 
   const result = useMemo(() => decodeJwt(input), [input]);
@@ -110,7 +109,6 @@ export function JwtDecoderClient() {
 
   return (
     <div className="space-y-6">
-      {/* Security notice */}
       <div
         className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
         role="status"
@@ -122,7 +120,6 @@ export function JwtDecoderClient() {
         </span>
       </div>
 
-      {/* Input panel */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -183,10 +180,8 @@ export function JwtDecoderClient() {
         />
       </section>
 
-      {/* Decoded output */}
       {result.valid && (
         <div className="space-y-6">
-          {/* Status warnings: expired, not yet valid, alg none, missing exp */}
           {(isExpired || isNotYetValid || algNone || hasNoExp) && (
             <div className="space-y-2">
               {isExpired && (
@@ -240,7 +235,6 @@ export function JwtDecoderClient() {
             </div>
           )}
 
-          {/* Summary: alg, standard claims, times, lifetime */}
           <section className="flex flex-wrap gap-x-6 gap-y-3 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
             {alg && (
               <span>
@@ -321,7 +315,6 @@ export function JwtDecoderClient() {
             )}
           </section>
 
-          {/* Header */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
@@ -338,7 +331,6 @@ export function JwtDecoderClient() {
             </pre>
           </section>
 
-          {/* Payload */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
@@ -355,7 +347,6 @@ export function JwtDecoderClient() {
             </pre>
           </section>
 
-          {/* Signature (informational) */}
           <section className="space-y-2">
             <span className="text-sm font-medium text-muted-foreground">
               Signature (not verified)
@@ -383,4 +374,6 @@ export function JwtDecoderClient() {
       )}
     </div>
   );
-}
+};
+
+export default JwtDecoderClient;

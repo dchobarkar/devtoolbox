@@ -7,7 +7,7 @@ interface ToolCardProps {
   icon?: React.ReactNode;
 }
 
-export function ToolCard({ tool, icon }: ToolCardProps) {
+const ToolCard = ({ tool, icon }: ToolCardProps) => {
   return (
     <Link
       href={tool.href}
@@ -30,4 +30,6 @@ export function ToolCard({ tool, icon }: ToolCardProps) {
       </span>
     </Link>
   );
-}
+};
+
+export default ToolCard;

@@ -3,8 +3,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { Trash2, FileJson, CheckCircle2, XCircle } from "lucide-react";
 
-import { TextArea } from "@/components/shared/TextArea";
-import { CopyButton } from "@/components/shared/CopyButton";
+import TextArea from "@/components/shared/TextArea";
+import CopyButton from "@/components/shared/CopyButton";
 import {
   validateJson,
   formatJson,
@@ -21,7 +21,7 @@ const SAMPLE_JSON = `{
 
 type Mode = "format" | "minify";
 
-export function JsonFormatterClient() {
+const JsonFormatterClient = () => {
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<Mode>("format");
   const [indent, setIndent] = useState<IndentStyle>("2");
@@ -44,7 +44,6 @@ export function JsonFormatterClient() {
 
   return (
     <div className="space-y-6">
-      {/* Input panel */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -113,7 +112,6 @@ export function JsonFormatterClient() {
         )}
       </section>
 
-      {/* Toolbar: mode + indent + copy */}
       <section className="flex flex-wrap items-center gap-4 border-y border-border py-3">
         <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5">
           <ModeButton
@@ -162,7 +160,6 @@ export function JsonFormatterClient() {
         </div>
       </section>
 
-      {/* Output panel */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">
@@ -201,9 +198,9 @@ export function JsonFormatterClient() {
       </section>
     </div>
   );
-}
+};
 
-function ModeButton({
+const ModeButton = ({
   active,
   onClick,
   children,
@@ -211,7 +208,7 @@ function ModeButton({
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <button
       type="button"
@@ -225,4 +222,6 @@ function ModeButton({
       {children}
     </button>
   );
-}
+};
+
+export default JsonFormatterClient;

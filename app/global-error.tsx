@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 
-export default function GlobalError({
+const GlobalError = ({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}) => {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -46,4 +46,6 @@ export default function GlobalError({
       </body>
     </html>
   );
-}
+};
+
+export default GlobalError;

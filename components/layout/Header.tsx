@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Wrench } from "lucide-react";
 
-export function Header() {
+const Header = () => {
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
@@ -24,4 +24,6 @@ export function Header() {
       </div>
     </header>
   );
-}
+};
+
+export default Header;

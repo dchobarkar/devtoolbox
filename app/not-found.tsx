@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileQuestion, Home } from "lucide-react";
 
-export default function NotFound() {
+const NotFound = () => {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
       <FileQuestion
@@ -10,7 +10,7 @@ export default function NotFound() {
       />
       <h1 className="text-2xl font-semibold text-foreground">Page not found</h1>
       <p className="mt-2 text-muted-foreground">
-        The page you’re looking for doesn’t exist or has been moved.
+        The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <Link
         href="/"
@@ -21,4 +21,6 @@ export default function NotFound() {
       </Link>
     </div>
   );
-}
+};
+
+export default NotFound;

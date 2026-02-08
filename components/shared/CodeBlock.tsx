@@ -4,7 +4,7 @@ interface CodeBlockProps {
   label?: string;
 }
 
-export function CodeBlock({ children, className = "", label }: CodeBlockProps) {
+const CodeBlock = ({ children, className = "", label }: CodeBlockProps) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -19,4 +19,6 @@ export function CodeBlock({ children, className = "", label }: CodeBlockProps) {
       </pre>
     </div>
   );
-}
+};
+
+export default CodeBlock;

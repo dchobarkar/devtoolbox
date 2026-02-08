@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 
-export default function Loading() {
+const Loading = () => {
   return (
     <div
       className="flex min-h-[60vh] items-center justify-center"
@@ -11,4 +11,6 @@ export default function Loading() {
       <span className="sr-only">Loading…</span>
     </div>
   );
-}
+};
+
+export default Loading;
