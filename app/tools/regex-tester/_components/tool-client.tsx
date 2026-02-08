@@ -6,6 +6,8 @@ import {
   Regex as RegexIcon,
   CheckCircle2,
   XCircle,
+  BookOpen,
+  ChevronRight,
 } from "lucide-react";
 
 import TextArea from "@/components/shared/TextArea";
@@ -15,6 +17,39 @@ import { testRegex, replaceWithRegex } from "@/lib/parsers/regex";
 const SAMPLE_PATTERN = "\\w+@\\w+\\.\\w+";
 const SAMPLE_TEXT = `Contact us at support@example.com or sales@company.org.
 Invalid: notanemail, missing@.com, @nodomain.com`;
+
+const COMMON_PATTERNS = [
+  {
+    name: "Email",
+    pattern: "\\w+@\\w+\\.\\w+",
+    sample: "Email: test@example.com and admin@site.org",
+  },
+  {
+    name: "URL",
+    pattern: "https?://[\\w.-]+(?:/\\S*)?",
+    sample: "Visit https://example.com/path and http://test.org",
+  },
+  {
+    name: "Phone (US)",
+    pattern: "\\d{3}[-.]?\\d{3}[-.]?\\d{4}",
+    sample: "Call 555-123-4567 or 555.987.6543",
+  },
+  {
+    name: "IPv4",
+    pattern: "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b",
+    sample: "Server 192.168.1.1 and 10.0.0.1",
+  },
+  {
+    name: "Date (YYYY-MM-DD)",
+    pattern: "\\d{4}-\\d{2}-\\d{2}",
+    sample: "Dates: 2024-01-15 and 2023-12-31",
+  },
+  {
+    name: "Hex color",
+    pattern: "#[0-9a-fA-F]{6}",
+    sample: "Colors: #ff0000 #00ff00 #0000ff",
+  },
+] as const;
 
 const FLAGS = [
   { id: "g", label: "g", title: "Global (all matches)" },
@@ -72,6 +107,12 @@ const RegexTesterClient = () => {
               .join("\n")
         : "";
 
+  const jsSnippet = useMemo(() => {
+    if (!pattern.trim()) return "";
+    const escaped = pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `const regex = new RegExp("${escaped}", "${flags}");`;
+  }, [pattern, flags]);
+
   const handleClear = useCallback(() => {
     setPattern("");
     setText("");
@@ -84,6 +125,15 @@ const RegexTesterClient = () => {
     setFlags("g");
     setReplacement("");
   }, []);
+
+  const handleCommonPattern = useCallback(
+    (preset: (typeof COMMON_PATTERNS)[number]) => {
+      setPattern(preset.pattern);
+      setText(preset.sample);
+      setFlags("g");
+    },
+    [],
+  );
 
   const toggleFlag = useCallback((flag: string) => {
     setFlags((prev) =>
@@ -140,7 +190,30 @@ const RegexTesterClient = () => {
               <Trash2 className="h-3.5 w-3.5" aria-hidden />
               Clear
             </button>
+            {pattern.trim() && jsSnippet && (
+              <CopyButton
+                text={jsSnippet}
+                label="Copy as JavaScript"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+              />
+            )}
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Presets:
+          </span>
+          {COMMON_PATTERNS.map((preset) => (
+            <button
+              key={preset.name}
+              type="button"
+              onClick={() => handleCommonPattern(preset)}
+              title={preset.pattern}
+              className="rounded border border-border bg-card px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+            >
+              {preset.name}
+            </button>
+          ))}
         </div>
         <input
           type="text"
@@ -177,7 +250,6 @@ const RegexTesterClient = () => {
           ))}
         </div>
       </section>
-
       <section className="flex flex-wrap items-center gap-4 border-y border-border py-3">
         <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5">
           <ModeButton
@@ -194,7 +266,6 @@ const RegexTesterClient = () => {
           </ModeButton>
         </div>
       </section>
-
       <section className="space-y-2">
         <label className="text-sm font-medium text-foreground">
           Test string
@@ -207,7 +278,6 @@ const RegexTesterClient = () => {
           spellCheck={false}
         />
       </section>
-
       {/* Replacement (Replace mode only) */}
       {mode === "replace" && (
         <section className="space-y-2">
@@ -224,12 +294,28 @@ const RegexTesterClient = () => {
           />
         </section>
       )}
-
-      {/* Output */}
+      ß{" "}
+      {mode === "match" &&
+        testResult?.valid &&
+        testResult.matches.length > 0 &&
+        text && (
+          <section className="space-y-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              Preview (matches highlighted)
+            </span>
+            <div className="rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground whitespace-pre-wrap wrap-break-word">
+              <HighlightedText text={text} matches={testResult.matches} />
+            </div>
+          </section>
+        )}
       <section className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-medium text-muted-foreground">
-            {mode === "match" ? "Matches" : "Result"}
+            {mode === "match"
+              ? testResult?.valid && testResult.matches.length > 0
+                ? `${testResult.matches.length} match${testResult.matches.length === 1 ? "" : "es"}`
+                : "Matches"
+              : "Result"}
           </span>
           {outputString ? (
             <CopyButton
@@ -290,7 +376,86 @@ const RegexTesterClient = () => {
           </div>
         )}
       </section>
+      <details className="group rounded-lg border border-border bg-muted/30">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+          <ChevronRight
+            className="h-4 w-4 transition-transform group-open:rotate-90"
+            aria-hidden
+          />
+          <BookOpen className="h-4 w-4 text-accent" aria-hidden />
+          Quick reference
+        </summary>
+        <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="mb-1 font-medium text-foreground">
+                Character classes
+              </p>
+              <p>
+                . any · \d digit · \w word · \s space · [abc] set · [^abc]
+                negated
+              </p>
+            </div>
+            <div>
+              <p className="mb-1 font-medium text-foreground">Quantifiers</p>
+              <p>
+                * 0+ · + 1+ · ? 0 or 1 · &#123;n&#125; n · &#123;n,m&#125; n to
+                m · *? +? lazy
+              </p>
+            </div>
+            <div>
+              <p className="mb-1 font-medium text-foreground">Anchors</p>
+              <p>^ start · $ end · \b word boundary · \B non-boundary</p>
+            </div>
+            <div>
+              <p className="mb-1 font-medium text-foreground">Groups</p>
+              <p>
+                (x) capture · (?:x) non-capture · \1 backref · (?=x) lookahead ·
+                (?!x) neg lookahead
+              </p>
+            </div>
+          </div>
+        </div>
+      </details>
     </div>
+  );
+};
+
+const HighlightedText = ({
+  text,
+  matches,
+}: {
+  text: string;
+  matches: { match: string; index: number }[];
+}) => {
+  const sorted = [...matches].sort((a, b) => a.index - b.index);
+  const segments: { type: "text" | "match"; value: string }[] = [];
+  let last = 0;
+  for (const m of sorted) {
+    if (m.index > last) {
+      segments.push({ type: "text", value: text.slice(last, m.index) });
+    }
+    segments.push({ type: "match", value: m.match });
+    last = m.index + m.match.length;
+  }
+  if (last < text.length) {
+    segments.push({ type: "text", value: text.slice(last) });
+  }
+  return (
+    <>
+      {segments.map((seg, i) =>
+        seg.type === "match" ? (
+          <mark
+            key={i}
+            className="rounded bg-amber-400/50 text-foreground dark:bg-amber-500/30"
+          >
+            {seg.value}
+          </mark>
+        ) : (
+          <span key={i}>{seg.value}</span>
+        ),
+      )}
+    </>
   );
 };
 
