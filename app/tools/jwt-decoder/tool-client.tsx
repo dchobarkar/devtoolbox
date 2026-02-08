@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Trash2, Key, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
+import {
+  Trash2,
+  Key,
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
+  AlertTriangle,
+  Clock,
+  Info,
+} from "lucide-react";
 
 import { TextArea } from "@/components/shared/TextArea";
 import { CopyButton } from "@/components/shared/CopyButton";
@@ -11,10 +20,47 @@ import { decodeJwt, jwtPartToJson } from "@/lib/parsers/jwt";
 const SAMPLE_JWT =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
+const nowSec = () => Math.floor(Date.now() / 1000);
+
 function formatTimestamp(ts: unknown): string | null {
   if (typeof ts !== "number") return null;
   const d = new Date(ts * 1000);
   return d.toISOString();
+}
+
+function formatAud(aud: unknown): string | null {
+  if (aud == null) return null;
+  if (typeof aud === "string") return aud;
+  if (Array.isArray(aud)) return aud.map(String).join(", ");
+  return String(aud);
+}
+
+function formatLifetime(iat: number, exp: number): string {
+  const sec = exp - iat;
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${Math.round(sec / 60)}m`;
+  if (sec < 86400) return `${(sec / 3600).toFixed(1)}h`;
+  const days = (sec / 86400).toFixed(1);
+  return `${days} day${days === "1.0" ? "" : "s"}`;
+}
+
+function timeUntilOrSince(ts: number): string {
+  const sec = ts - nowSec();
+  const abs = Math.abs(sec);
+  if (abs < 60)
+    return sec >= 0 ? "in less than a minute" : "less than a minute ago";
+  if (abs < 3600) {
+    const m = Math.round(abs / 60);
+    return sec >= 0 ? `in ${m}m` : `${m}m ago`;
+  }
+  if (abs < 86400) {
+    const h = (abs / 3600).toFixed(1);
+    return sec >= 0 ? `in ${h}h` : `${h}h ago`;
+  }
+  const d = Math.round(abs / 86400);
+  return sec >= 0
+    ? `in ${d} day${d === 1 ? "" : "s"}`
+    : `${d} day${d === 1 ? "" : "s"} ago`;
 }
 
 export function JwtDecoderClient() {
@@ -38,8 +84,29 @@ export function JwtDecoderClient() {
   const alg = result.valid ? (result.jwt.header.alg as string) : null;
   const exp = result.valid ? result.jwt.payload.exp : null;
   const iat = result.valid ? result.jwt.payload.iat : null;
+  const nbf = result.valid ? result.jwt.payload.nbf : null;
+  const sub = result.valid ? result.jwt.payload.sub : null;
+  const iss = result.valid ? result.jwt.payload.iss : null;
+  const aud = result.valid ? formatAud(result.jwt.payload.aud) : null;
+
   const expFormatted = formatTimestamp(exp);
   const iatFormatted = formatTimestamp(iat);
+  const nbfFormatted = formatTimestamp(nbf);
+
+  const now = nowSec();
+  const isExpired = typeof exp === "number" && exp < now;
+  const isNotYetValid = typeof nbf === "number" && nbf > now;
+  const hasNoExp = result.valid && (exp == null || typeof exp !== "number");
+  const algNone = typeof alg === "string" && alg.toLowerCase() === "none";
+  const lifetime =
+    result.valid &&
+    typeof iat === "number" &&
+    typeof exp === "number" &&
+    exp > iat
+      ? formatLifetime(iat, exp)
+      : null;
+  const expRelative = typeof exp === "number" ? timeUntilOrSince(exp) : null;
+  const nbfRelative = typeof nbf === "number" ? timeUntilOrSince(nbf) : null;
 
   return (
     <div className="space-y-6">
@@ -110,7 +177,7 @@ export function JwtDecoderClient() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           error={result.valid ? undefined : result.error}
-          className="min-h-[120px] resize-y font-mono text-sm"
+          className="min-h-30 resize-y font-mono text-sm"
           spellCheck={false}
           aria-invalid={!result.valid && input.trim().length > 0}
         />
@@ -119,8 +186,62 @@ export function JwtDecoderClient() {
       {/* Decoded output */}
       {result.valid && (
         <div className="space-y-6">
-          {/* Summary: alg, exp, iat */}
-          <section className="flex flex-wrap gap-4 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+          {/* Status warnings: expired, not yet valid, alg none, missing exp */}
+          {(isExpired || isNotYetValid || algNone || hasNoExp) && (
+            <div className="space-y-2">
+              {isExpired && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"
+                  role="alert"
+                >
+                  <Clock className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>
+                    <strong>This token has expired.</strong>
+                    {expRelative && ` (${expRelative})`}
+                  </span>
+                </div>
+              )}
+              {isNotYetValid && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+                  role="alert"
+                >
+                  <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>
+                    <strong>This token is not yet valid (nbf).</strong>
+                    {nbfRelative && ` ${nbfRelative}`}
+                  </span>
+                </div>
+              )}
+              {algNone && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"
+                  role="alert"
+                >
+                  <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>
+                    <strong>Insecure:</strong> Algorithm &quot;none&quot; means
+                    no signature verification. Do not trust this token.
+                  </span>
+                </div>
+              )}
+              {hasNoExp && !algNone && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground"
+                  role="status"
+                >
+                  <Info className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>
+                    Token has no expiration claim (exp). It will not expire
+                    automatically.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Summary: alg, standard claims, times, lifetime */}
+          <section className="flex flex-wrap gap-x-6 gap-y-3 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
             {alg && (
               <span>
                 <span className="font-medium text-muted-foreground">
@@ -129,20 +250,73 @@ export function JwtDecoderClient() {
                 <span className="font-mono text-foreground">{alg}</span>
               </span>
             )}
+            {sub != null && (
+              <span>
+                <span className="font-medium text-muted-foreground">
+                  Subject (sub):{" "}
+                </span>
+                <span className="font-mono text-foreground">{String(sub)}</span>
+              </span>
+            )}
+            {iss != null && (
+              <span>
+                <span className="font-medium text-muted-foreground">
+                  Issuer (iss):{" "}
+                </span>
+                <span className="font-mono text-foreground">{String(iss)}</span>
+              </span>
+            )}
+            {aud != null && (
+              <span>
+                <span className="font-medium text-muted-foreground">
+                  Audience (aud):{" "}
+                </span>
+                <span className="font-mono text-foreground break-all">
+                  {aud}
+                </span>
+              </span>
+            )}
             {iatFormatted && (
               <span>
                 <span className="font-medium text-muted-foreground">
-                  Issued at:{" "}
+                  Issued at (iat):{" "}
                 </span>
-                <span className="font-mono text-foreground">{iatFormatted}</span>
+                <span className="font-mono text-foreground">
+                  {iatFormatted}
+                </span>
+              </span>
+            )}
+            {nbfFormatted && (
+              <span>
+                <span className="font-medium text-muted-foreground">
+                  Not before (nbf):{" "}
+                </span>
+                <span className="font-mono text-foreground">
+                  {nbfFormatted}
+                </span>
               </span>
             )}
             {expFormatted && (
               <span>
                 <span className="font-medium text-muted-foreground">
-                  Expires:{" "}
+                  Expires (exp):{" "}
                 </span>
-                <span className="font-mono text-foreground">{expFormatted}</span>
+                <span className="font-mono text-foreground">
+                  {expFormatted}
+                </span>
+                {expRelative && (
+                  <span className="ml-1 text-muted-foreground">
+                    ({expRelative})
+                  </span>
+                )}
+              </span>
+            )}
+            {lifetime && (
+              <span>
+                <span className="font-medium text-muted-foreground">
+                  Lifetime:{" "}
+                </span>
+                <span className="font-mono text-foreground">{lifetime}</span>
               </span>
             )}
           </section>
@@ -159,7 +333,7 @@ export function JwtDecoderClient() {
                 className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
               />
             </div>
-            <pre className="max-h-[200px] overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground">
+            <pre className="max-h-50 overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground">
               <code>{headerJson}</code>
             </pre>
           </section>
@@ -176,7 +350,7 @@ export function JwtDecoderClient() {
                 className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
               />
             </div>
-            <pre className="max-h-[280px] overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground">
+            <pre className="max-h-70 overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground">
               <code>{payloadJson}</code>
             </pre>
           </section>
