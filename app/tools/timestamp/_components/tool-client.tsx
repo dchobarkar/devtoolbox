@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import {
-  Trash2,
-  Clock,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 import CopyButton from "@/components/shared/CopyButton";
 import {
@@ -31,13 +26,37 @@ const TimestampClient = () => {
 
   const outputRows = result.valid
     ? [
-        { label: "Local", value: result.localString!, copyValue: result.localString! },
-        { label: "UTC", value: result.utcString!, copyValue: result.utcString! },
+        {
+          label: "Local",
+          value: result.localString!,
+          copyValue: result.localString!,
+        },
+        {
+          label: "UTC",
+          value: result.utcString!,
+          copyValue: result.utcString!,
+        },
         { label: "ISO 8601", value: result.iso!, copyValue: result.iso! },
-        { label: "RFC 2822", value: result.rfc2822!, copyValue: result.rfc2822! },
-        { label: "Unix (seconds)", value: String(result.unixSeconds!), copyValue: String(result.unixSeconds!) },
-        { label: "Unix (ms)", value: String(result.unixMs!), copyValue: String(result.unixMs!) },
-        { label: "Relative", value: result.relative!, copyValue: result.relative! },
+        {
+          label: "RFC 2822",
+          value: result.rfc2822!,
+          copyValue: result.rfc2822!,
+        },
+        {
+          label: "Unix (seconds)",
+          value: String(result.unixSeconds!),
+          copyValue: String(result.unixSeconds!),
+        },
+        {
+          label: "Unix (ms)",
+          value: String(result.unixMs!),
+          copyValue: String(result.unixMs!),
+        },
+        {
+          label: "Relative",
+          value: result.relative!,
+          copyValue: result.relative!,
+        },
       ]
     : [];
 
@@ -46,7 +65,10 @@ const TimestampClient = () => {
       <section className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm font-medium text-foreground" htmlFor="timestamp-input">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="timestamp-input"
+            >
               Timestamp or date
             </label>
             {input.trim() && (
@@ -155,11 +177,14 @@ const TimestampClient = () => {
             className="rounded-lg border border-red-500/50 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-400"
             role="alert"
           >
-            Enter a valid Unix timestamp (seconds or milliseconds) or a date string (e.g. ISO 8601).
+            Enter a valid Unix timestamp (seconds or milliseconds) or a date
+            string (e.g. ISO 8601).
           </div>
         ) : (
           <div className="rounded-lg border border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-            Enter a timestamp or date to see converted formats. Supports Unix seconds (10 digits), milliseconds (13), and date strings like ISO 8601.
+            Enter a timestamp or date to see converted formats. Supports Unix
+            seconds (10 digits), milliseconds (13), and date strings like ISO
+            8601.
           </div>
         )}
       </section>
