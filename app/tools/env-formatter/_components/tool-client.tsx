@@ -16,6 +16,8 @@ import {
   validateEnv,
   formatEnv,
   toEnvExample,
+  toJson,
+  parseJsonToEnv,
   type FormatEnvOptions,
   type EnvSpacing,
 } from "@/lib/formatters/env";
@@ -32,15 +34,33 @@ DATABASE_URL=postgres://other
 API_KEY=sk-1234567890
 `;
 
+type OutputFormat = "formatted" | "minified" | "example" | "json";
+
 const EnvFormatterClient = () => {
   const [input, setInput] = useState("");
   const [sortKeys, setSortKeys] = useState(false);
   const [spacing, setSpacing] = useState<EnvSpacing>("none");
   const [exportPrefix, setExportPrefix] = useState(false);
-  const [showExample, setShowExample] = useState(false);
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>("formatted");
+  const [lineEnding, setLineEnding] = useState<"lf" | "crlf">("lf");
 
-  const parsed = useMemo(() => parseEnv(input), [input]);
+  const parsed = useMemo(() => {
+    const fromJson = parseJsonToEnv(input);
+    if (fromJson) return fromJson;
+    return parseEnv(input);
+  }, [input]);
+
   const validation = useMemo(() => validateEnv(parsed), [parsed]);
+  const isJsonInput = useMemo(() => {
+    const raw = input.trim();
+    if (!raw.startsWith("{")) return false;
+    try {
+      const data = JSON.parse(raw);
+      return data !== null && typeof data === "object" && !Array.isArray(data);
+    } catch {
+      return false;
+    }
+  }, [input]);
 
   const formatOptions: FormatEnvOptions = useMemo(
     () => ({
@@ -48,27 +68,27 @@ const EnvFormatterClient = () => {
       spacing,
       trailingNewline: true,
       exportPrefix,
+      minify: outputFormat === "minified",
+      lineEnding,
     }),
-    [sortKeys, spacing, exportPrefix],
+    [sortKeys, spacing, exportPrefix, outputFormat, lineEnding],
   );
 
   const output = useMemo(() => {
     if (!input.trim()) return "";
+    if (outputFormat === "json") return toJson(parsed, 2);
+    if (outputFormat === "example") {
+      return toEnvExample(parsed, "<value>", lineEnding);
+    }
     return formatEnv(parsed, formatOptions);
-  }, [input, parsed, formatOptions]);
+  }, [input, parsed, outputFormat, formatOptions, lineEnding]);
 
-  const exampleOutput = useMemo(() => {
-    if (!input.trim() || parsed.entries.length === 0) return "";
-    return toEnvExample(parsed, "<value>");
-  }, [input, parsed]);
-
-  const displayOutput = showExample ? exampleOutput : output;
+  const displayOutput = output;
   const hasEntries = parsed.entries.length > 0;
 
   const handleClear = useCallback(() => setInput(""), []);
   const handleLoadSample = useCallback(() => setInput(SAMPLE_ENV), []);
 
-  const isValid = validation.valid && parsed.entries.length >= 0;
   const hasDuplicates = validation.duplicateKeys.length > 0;
 
   return (
@@ -77,7 +97,7 @@ const EnvFormatterClient = () => {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-sm font-medium text-foreground">
-              .env input
+              {isJsonInput ? "JSON input (as env)" : ".env input"}
             </label>
             {input.trim() && (
               <>
@@ -136,7 +156,7 @@ const EnvFormatterClient = () => {
           </div>
         </div>
         <TextArea
-          placeholder="Paste or type .env content… KEY=value, one per line"
+          placeholder={'Paste .env (KEY=value) or JSON ({ "KEY": "value" })…'}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           error={
@@ -149,7 +169,10 @@ const EnvFormatterClient = () => {
           aria-invalid={!validation.valid}
         />
         {validation.errors.length > 1 && (
-          <ul className="text-sm text-red-500 list-disc list-inside" role="list">
+          <ul
+            className="text-sm text-red-500 list-disc list-inside"
+            role="list"
+          >
             {validation.errors.map((err, i) => (
               <li key={i}>{err}</li>
             ))}
@@ -157,7 +180,8 @@ const EnvFormatterClient = () => {
         )}
         {hasDuplicates && (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            Duplicate keys (last value wins): {validation.duplicateKeys.join(", ")}
+            Duplicate keys (last value wins):{" "}
+            {validation.duplicateKeys.join(", ")}
           </p>
         )}
       </section>
@@ -189,6 +213,53 @@ const EnvFormatterClient = () => {
             </button>
           ))}
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Output:
+          </span>
+          {(
+            [
+              { id: "formatted" as const, label: ".env" },
+              { id: "minified" as const, label: "Minified" },
+              { id: "example" as const, label: ".env.example" },
+              { id: "json" as const, label: "JSON" },
+            ] as const
+          ).map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setOutputFormat(id)}
+              className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background ${
+                outputFormat === id
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {outputFormat !== "json" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Line ending:
+            </span>
+            {(["lf", "crlf"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setLineEnding(opt)}
+                className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background ${
+                  lineEnding === opt
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {opt === "crlf" ? "CRLF" : "LF"}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
@@ -196,18 +267,15 @@ const EnvFormatterClient = () => {
             onChange={(e) => setExportPrefix(e.target.checked)}
             className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
           />
-          <span>Add <code className="rounded bg-muted/50 px-1">export</code> prefix</span>
+          <span>
+            Add <code className="rounded bg-muted/50 px-1">export</code> prefix
+          </span>
         </label>
-        {hasEntries && (
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={showExample}
-              onChange={(e) => setShowExample(e.target.checked)}
-              className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
-            />
-            <span>Show .env.example (values → placeholder)</span>
-          </label>
+        {hasEntries && outputFormat === "example" && (
+          <span className="text-xs text-muted-foreground">
+            Values →{" "}
+            <code className="rounded bg-muted/50 px-1">&lt;value&gt;</code>
+          </span>
         )}
         <div className="ml-auto flex items-center gap-2">
           <CopyButton
@@ -222,7 +290,13 @@ const EnvFormatterClient = () => {
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">
-            {showExample ? ".env.example output" : "Formatted output"}
+            {outputFormat === "json"
+              ? "JSON output"
+              : outputFormat === "example"
+                ? ".env.example output"
+                : outputFormat === "minified"
+                  ? "Minified .env output"
+                  : "Formatted output"}
           </span>
           {displayOutput ? (
             <CopyButton
@@ -236,7 +310,13 @@ const EnvFormatterClient = () => {
           <pre
             className="max-h-96 overflow-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-sm text-foreground whitespace-pre-wrap break-all"
             role="region"
-            aria-label={showExample ? ".env.example output" : "Formatted .env output"}
+            aria-label={
+              outputFormat === "json"
+                ? "JSON output"
+                : outputFormat === "example"
+                  ? ".env.example output"
+                  : "Formatted .env output"
+            }
           >
             <code>{displayOutput}</code>
           </pre>
@@ -250,8 +330,8 @@ const EnvFormatterClient = () => {
         ) : (
           <div className="rounded-lg border border-border bg-muted/30 p-6 text-center font-mono text-sm text-muted-foreground">
             {input.trim()
-              ? "Formatted .env will appear here."
-              : "Paste or type .env content to format. Comments and blank lines are preserved."}
+              ? "Formatted output will appear here."
+              : "Paste .env or JSON to format. Comments and blank lines are preserved for .env."}
           </div>
         )}
       </section>

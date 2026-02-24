@@ -1,12 +1,6 @@
-/**
- * .env formatter: parse, validate, format, and optionally sort key=value files.
- * Preserves comments and blank lines. Detects duplicate keys.
- */
-
 export interface EnvEntry {
   key: string;
   value: string;
-  /** Original line (with export prefix if present) for ordering */
   rawKey: string;
   lineIndex: number;
 }
@@ -20,7 +14,6 @@ export interface ParsedEnv {
   entries: EnvEntry[];
   comments: EnvComment[];
   blanks: number[];
-  /** Line index -> "entry" | "comment" | "blank" */
   lineOrder: { lineIndex: number; type: "entry" | "comment" | "blank" }[];
 }
 
@@ -30,11 +23,20 @@ export interface EnvValidation {
   duplicateKeys: string[];
 }
 
+export interface FormatEnvOptions {
+  sortKeys?: boolean;
+  spacing?: EnvSpacing;
+  trailingNewline?: boolean;
+  exportPrefix?: boolean;
+  minify?: boolean;
+  lineEnding?: "lf" | "crlf";
+}
+
 export type EnvSpacing = "none" | "around";
 
 const KEY_REGEX = /^(export\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.*)$/;
 
-function parseValue(raw: string): { value: string; rest: string } {
+const parseValue = (raw: string): { value: string; rest: string } => {
   const s = raw.trimStart();
   if (s.startsWith('"')) {
     let i = 1;
@@ -66,13 +68,12 @@ function parseValue(raw: string): { value: string; rest: string } {
     if (end === -1) return { value: s.slice(1), rest: "" };
     return { value: s.slice(1, end), rest: s.slice(end + 1) };
   }
-  // Unquoted: take until end or until # (comment)
   const hashIdx = s.search(/\s#\s/);
   const unquoted = hashIdx >= 0 ? s.slice(0, hashIdx).trimEnd() : s.trimEnd();
   return { value: unquoted, rest: "" };
-}
+};
 
-function parseEnv(input: string): ParsedEnv {
+const parseEnv = (input: string): ParsedEnv => {
   const lines = input.split(/\r?\n/);
   const entries: EnvEntry[] = [];
   const comments: EnvComment[] = [];
@@ -81,7 +82,6 @@ function parseEnv(input: string): ParsedEnv {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const trimmed = line.trimEnd();
     const trimmedStart = line.trimStart();
 
     if (trimmedStart.length === 0) {
@@ -111,16 +111,15 @@ function parseEnv(input: string): ParsedEnv {
       });
       lineOrder.push({ lineIndex: i, type: "entry" });
     } else {
-      // Treat malformed line as comment so we don't drop it
       comments.push({ text: trimmedStart, lineIndex: i });
       lineOrder.push({ lineIndex: i, type: "comment" });
     }
   }
 
   return { entries, comments, blanks, lineOrder };
-}
+};
 
-function getDuplicateKeys(entries: EnvEntry[]): string[] {
+const getDuplicateKeys = (entries: EnvEntry[]): string[] => {
   const seen = new Map<string, number>();
   const dups = new Set<string>();
   for (const e of entries) {
@@ -129,9 +128,9 @@ function getDuplicateKeys(entries: EnvEntry[]): string[] {
     else seen.set(k, e.lineIndex);
   }
   return Array.from(dups);
-}
+};
 
-function validateEnv(parsed: ParsedEnv): EnvValidation {
+const validateEnv = (parsed: ParsedEnv): EnvValidation => {
   const errors: string[] = [];
   const keyPattern = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
   for (const e of parsed.entries) {
@@ -140,25 +139,21 @@ function validateEnv(parsed: ParsedEnv): EnvValidation {
       continue;
     }
     if (!keyPattern.test(e.key)) {
-      errors.push(`Line ${e.lineIndex + 1}: invalid key "${e.key}" (use letters, numbers, underscores)`);
+      errors.push(
+        `Line ${e.lineIndex + 1}: invalid key "${e.key}" (use letters, numbers, underscores)`,
+      );
     }
   }
+
   const duplicateKeys = getDuplicateKeys(parsed.entries);
   return {
     valid: errors.length === 0,
     errors,
     duplicateKeys,
   };
-}
+};
 
-export interface FormatEnvOptions {
-  sortKeys?: boolean;
-  spacing?: EnvSpacing;
-  trailingNewline?: boolean;
-  exportPrefix?: boolean;
-}
-
-function escapeValue(value: string, preferQuotes: boolean): string {
+const escapeValue = (value: string, preferQuotes: boolean): string => {
   const needsQuotes =
     preferQuotes ||
     /[\s#="'\\]/.test(value) ||
@@ -172,21 +167,24 @@ function escapeValue(value: string, preferQuotes: boolean): string {
     .replace(/\r/g, "\\r")
     .replace(/\t/g, "\\t");
   return `"${escaped}"`;
-}
+};
 
-function formatEnv(
+const formatEnv = (
   parsed: ParsedEnv,
   options: FormatEnvOptions = {},
-): string {
+): string => {
   const {
     sortKeys = false,
     spacing = "none",
     trailingNewline = true,
     exportPrefix = false,
+    minify = false,
+    lineEnding = "lf",
   } = options;
 
   const sep = spacing === "around" ? " = " : "=";
   const prefix = exportPrefix ? "export " : "";
+  const newline = lineEnding === "crlf" ? "\r\n" : "\n";
 
   const sortedEntries = sortKeys
     ? [...parsed.entries].sort((a, b) =>
@@ -194,8 +192,18 @@ function formatEnv(
       )
     : parsed.entries;
 
+  if (minify) {
+    const lines = sortedEntries.map(
+      (e) => `${prefix}${e.key}${sep}${escapeValue(e.value, false)}`,
+    );
+    const result = lines.join(newline);
+    return trailingNewline ? result + newline : result;
+  }
+
   const entryByLineIndex = new Map(parsed.entries.map((e) => [e.lineIndex, e]));
-  const sortedOrder = [...parsed.lineOrder].sort((a, b) => a.lineIndex - b.lineIndex);
+  const sortedOrder = [...parsed.lineOrder].sort(
+    (a, b) => a.lineIndex - b.lineIndex,
+  );
 
   const outputLines: string[] = [];
   let nextSortedIdx = 0;
@@ -207,23 +215,31 @@ function formatEnv(
       const c = parsed.comments.find((x) => x.lineIndex === lineIndex);
       if (c) outputLines.push(c.text);
     } else {
-      const e = sortKeys ? sortedEntries[nextSortedIdx++] : entryByLineIndex.get(lineIndex);
+      const e = sortKeys
+        ? sortedEntries[nextSortedIdx++]
+        : entryByLineIndex.get(lineIndex);
       if (e) {
-        outputLines.push(`${prefix}${e.key}${sep}${escapeValue(e.value, false)}`);
+        outputLines.push(
+          `${prefix}${e.key}${sep}${escapeValue(e.value, false)}`,
+        );
       }
     }
   }
 
-  const result = outputLines.join("\n");
-  return trailingNewline ? result + "\n" : result;
-}
+  const result = outputLines.join(newline);
+  return trailingNewline ? result + newline : result;
+};
 
-/**
- * Produce a secrets-safe .env.example: same keys, values replaced with empty or placeholder.
- */
-function toEnvExample(parsed: ParsedEnv, placeholder = ""): string {
+const toEnvExample = (
+  parsed: ParsedEnv,
+  placeholder = "",
+  lineEnding: "lf" | "crlf" = "lf",
+): string => {
+  const newline = lineEnding === "crlf" ? "\r\n" : "\n";
   const lines: string[] = [];
-  const sortedOrder = [...parsed.lineOrder].sort((a, b) => a.lineIndex - b.lineIndex);
+  const sortedOrder = [...parsed.lineOrder].sort(
+    (a, b) => a.lineIndex - b.lineIndex,
+  );
   const entryByLineIndex = new Map(parsed.entries.map((e) => [e.lineIndex, e]));
 
   for (const { lineIndex, type } of sortedOrder) {
@@ -240,8 +256,50 @@ function toEnvExample(parsed: ParsedEnv, placeholder = ""): string {
       }
     }
   }
-  return lines.join("\n") + "\n";
-}
+  return lines.join(newline) + newline;
+};
+
+const toJson = (parsed: ParsedEnv, indent = 2): string => {
+  const obj: Record<string, string> = {};
+  for (const e of parsed.entries) {
+    obj[e.key] = e.value;
+  }
+  return JSON.stringify(obj, null, indent === 0 ? undefined : indent);
+};
+
+const parseJsonToEnv = (input: string): ParsedEnv | null => {
+  const raw = input.trim();
+  if (!raw.startsWith("{")) return null;
+  try {
+    const data = JSON.parse(raw);
+    if (data === null || typeof data !== "object" || Array.isArray(data)) {
+      return null;
+    }
+    const entries: EnvEntry[] = [];
+    const lineOrder: ParsedEnv["lineOrder"] = [];
+    let i = 0;
+    for (const [key, val] of Object.entries(data)) {
+      if (typeof key !== "string") continue;
+      const value = val !== undefined && val !== null ? String(val) : "";
+      entries.push({
+        key,
+        value,
+        rawKey: key,
+        lineIndex: i,
+      });
+      lineOrder.push({ lineIndex: i, type: "entry" });
+      i++;
+    }
+    return {
+      entries,
+      comments: [],
+      blanks: [],
+      lineOrder,
+    };
+  } catch {
+    return null;
+  }
+};
 
 export {
   parseEnv,
@@ -249,4 +307,6 @@ export {
   getDuplicateKeys,
   formatEnv,
   toEnvExample,
+  toJson,
+  parseJsonToEnv,
 };
