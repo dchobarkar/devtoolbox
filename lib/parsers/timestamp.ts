@@ -3,12 +3,16 @@ export interface TimestampResult {
   error?: string;
   timestampMs?: number;
   localString?: string;
+  localString24?: string;
   utcString?: string;
   iso?: string;
   rfc2822?: string;
   unixSeconds?: number;
   unixMs?: number;
   relative?: string;
+  weekday?: string;
+  dayOfYear?: string;
+  weekNumber?: string;
 }
 
 const SEC = 1000;
@@ -67,12 +71,33 @@ const buildResult = (timestampMs: number): TimestampResult => {
   const rfc2822 = toRfc2822(d);
   const unixSeconds = Math.floor(timestampMs / SEC);
   const unixMs = Math.round(timestampMs);
+
+  const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+  const startOfYear = new Date(d.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((timestampMs - startOfYear.getTime()) / DAY) + 1;
+  const dayOfYearStr = `Day ${dayOfYear} of ${d.getFullYear()}`;
+  const getWeekNumber = (date: Date) => {
+    const oneJan = new Date(date.getFullYear(), 0, 1);
+    const weekNum = Math.ceil(
+      ((date.getTime() - oneJan.getTime()) / DAY + oneJan.getDay() + 1) / 7,
+    );
+    return { weekNum, year: date.getFullYear() };
+  };
+  const { weekNum, year } = getWeekNumber(d);
+  const weekNumber = `Week ${weekNum}, ${year}`;
+
   return {
     valid: true,
     timestampMs,
     localString: d.toLocaleString(undefined, {
       dateStyle: "medium",
       timeStyle: "medium",
+      hour12: true,
+    }),
+    localString24: d.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "medium",
+      hour12: false,
     }),
     utcString: d.toUTCString(),
     iso,
@@ -80,6 +105,9 @@ const buildResult = (timestampMs: number): TimestampResult => {
     unixSeconds,
     unixMs,
     relative: formatRelative(timestampMs),
+    weekday,
+    dayOfYear: dayOfYearStr,
+    weekNumber,
   };
 };
 
@@ -132,4 +160,24 @@ const nowUnixMs = (): number => {
   return Date.now();
 };
 
-export { parseTimestamp, nowUnixSeconds, nowUnixMs };
+const addSubtractMs = (timestampMs: number, deltaMs: number): number => {
+  return timestampMs + deltaMs;
+};
+
+const getCodeSnippets = (unixSeconds: number, unixMs: number) => {
+  return {
+    jsTimestamp: `new Date(${unixMs})`,
+    jsCurrentSeconds: "Math.floor(Date.now() / 1000)",
+    jsCurrentMs: "Date.now()",
+    pythonTimestamp: `datetime.fromtimestamp(${unixSeconds})`,
+    pythonCurrent: "int(time.time())",
+  };
+};
+
+export {
+  parseTimestamp,
+  nowUnixSeconds,
+  nowUnixMs,
+  addSubtractMs,
+  getCodeSnippets,
+};
